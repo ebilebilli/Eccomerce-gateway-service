@@ -6,6 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PORT=8080
+ENV SHOP_SERVICE=http://localhost:8001
+ENV SHOPCART_SERVICE=http://localhost:8002
 
 # Set working directory
 WORKDIR /app
@@ -23,12 +25,14 @@ COPY pyproject.toml uv.lock ./
 RUN pip install --upgrade pip
 RUN pip install .
 
+# Copy application code
+COPY gateway/ ./gateway/
 
 # Copy entrypoint script and make executable
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Create non-root user
+# Create non-root user and set permissions
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
