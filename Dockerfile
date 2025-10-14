@@ -12,12 +12,6 @@ ENV SHOPCART_SERVICE=http://localhost:8002
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for Postgres client and psql
-RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy pyproject.toml and lock file first
 COPY pyproject.toml uv.lock ./
 
