@@ -23,12 +23,6 @@ COPY pyproject.toml uv.lock ./
 RUN pip install --upgrade pip
 RUN pip install .
 
-# Copy Alembic configs
-COPY alembic.ini /app/alembic.ini
-COPY alembic /app/alembic
-
-# Copy application source code
-COPY src/ /app/src
 
 # Copy entrypoint script and make executable
 COPY entrypoint.sh /app/entrypoint.sh
