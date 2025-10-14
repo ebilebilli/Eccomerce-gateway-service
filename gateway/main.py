@@ -3,25 +3,25 @@ from fastapi import FastAPI, Request
 
 import requests
 from fastapi.responses import JSONResponse, PlainTextResponse
-
+from services import SHOP_SERVICE
 
 app = FastAPI(title="Gateway API")
 
 
-# def forward_request(url: str, method: str = "get", data=None):
-#     try:
-#         if method.lower() == "post":
-#             response = requests.post(url, json=data)
-#         else:
-#             response = requests.get(url)
-#         try:
-#             return JSONResponse(content=response.json(), status_code=response.status_code)
-#         except ValueError:
-#             return PlainTextResponse(content=response.text, status_code=response.status_code)
-#     except Exception as e:
-#         return JSONResponse(content={"error": str(e)}, status_code=500)
+def forward_request(url: str, method: str = "get", data=None):
+    try:
+        if method.lower() == "post":
+            response = requests.post(url, json=data)
+        else:
+            response = requests.get(url)
+        try:
+            return JSONResponse(content=response.json(), status_code=response.status_code)
+        except ValueError:
+            return PlainTextResponse(content=response.text, status_code=response.status_code)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# # --------------------------
+# --------------------------
 # # Service 1 — User Service
 # # --------------------------
 # @app.post("/service1/register")
@@ -36,12 +36,12 @@ app = FastAPI(title="Gateway API")
 # def service1_profile():
 #     return forward_request(f"{SERVICE_1}/profile/")
 
-# # --------------------------
-# # Shop Service Endpoints
-# # --------------------------
-# @app.get("/service-shop/shops")
-# def gateway_shop_list():
-#     return forward_request(f"{SERVICE_SHOP}/shops/")
+# --------------------------
+# Shop Service Endpoints
+# --------------------------
+@app.get("/service-shop/shops")
+def gateway_shop_list():
+    return forward_request(f"{SHOP_SERVICE}/api/v1/shops/")
 
 # @app.get("/service-shop/shops/{shop_slug}")
 # def gateway_shop_detail(shop_slug: str):
