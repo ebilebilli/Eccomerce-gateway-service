@@ -1,11 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "Starting API Gateway..."
-echo "PORT environment variable: ${PORT:-8080}"
-echo "SHOP_SERVICE: ${SHOP_SERVICE:-http://localhost:8001}"
-echo "SHOPCART_SERVICE: ${SHOPCART_SERVICE:-http://localhost:8002}"
-
 # Check if gateway directory exists
 if [ ! -d "/app/gateway" ]; then
     echo "ERROR: gateway directory not found!"

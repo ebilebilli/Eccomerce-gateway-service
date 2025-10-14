@@ -15,9 +15,10 @@ WORKDIR /app
 # Copy pyproject.toml and lock file first
 COPY pyproject.toml uv.lock ./
 
-# Install Python dependencies from pyproject.toml
-RUN pip install --upgrade pip
-RUN pip install .
+# Upgrade pip and install dependencies
+RUN pip install --upgrade pip \
+    && pip install build \
+    && pip install . --no-cache-dir
 
 # Copy application code
 COPY gateway/ ./gateway/
@@ -26,8 +27,9 @@ COPY gateway/ ./gateway/
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Create non-root user and set permissions
-RUN useradd -m appuser && chown -R appuser:appuser /app
+# Create non-root user and set ownership of /app
+RUN useradd -m appuser \
+    && chown -R appuser:appuser /app
 USER appuser
 
 # Expose port for Cloud Run
