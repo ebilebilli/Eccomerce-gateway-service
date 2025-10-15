@@ -1,20 +1,20 @@
 version: '3.8'
 
 services:
-  gateway:
-    build: .
-    container_name: ecommerce-gateway
+  gateway_service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gateway_service
+    command: ["sh", "/app/entrypoint.sh"]
     ports:
-      - "8000:8080"
+      - "8080:8080"
     env_file:
       - .env
-    environment:
-      PYTHONUNBUFFERED: 1
-      PYTHONDONTWRITEBYTECODE: 1
+    working_dir: /app
+    volumes:
+      - ./gateway:/app/gateway:rw
+      - ./uv.lock:/app/uv.lock:rw
+      - ./pyproject.toml:/app/pyproject.toml:rw
+      - ./.cache/uv:/home/appuser/.cache/uv  
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/docs || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s

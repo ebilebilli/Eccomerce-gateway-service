@@ -9,18 +9,26 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN apt-get update && apt-get install -y gcc curl && rm -rf /var/lib/apt/lists/*
 
-# copy project files first (so pip install sees the source)
-COPY pyproject.toml .
-COPY gateway/ ./gateway/
+# Copy pyproject.toml and lock file first
+COPY pyproject.toml uv.lock ./
 
-# install deps (editable ok if pyproject is configured)
-RUN pip install --no-cache-dir -e .
+# Install Python dependencies from pyproject.toml
+RUN pip install --upgrade pip
+RUN pip install .
 
-# create non-root user
-RUN adduser --disabled-password --gecos '' appuser && chown -R appuser:appuser /app
+# Copy application 
+COPY gateway/ /app/gateway
+
+# Copy entrypoint script and make executable
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Create non-root user
+RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
+# Expose port for Cloud Run
 EXPOSE 8080
 
-# Use exec form and explicit port 8080 (Cloud Run expects this)
-CMD ["uvicorn", "gateway.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Set entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
