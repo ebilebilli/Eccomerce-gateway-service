@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from services import shop_service , shop_cart_service
+from gateway.services import shop_service , shop_cart_service
 
 
 app = FastAPI(title='Gateway API', version='0.1')

@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import APIRouter, Request
 
-from utils.forward import forward_request
+from gateway.utils.forward import forward_request
 
 
 load_dotenv()
