@@ -1,20 +1,22 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  shopcart_service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: shopcart_service
-    command: ["sh", "/app/entrypoint.sh"]
+  # API Gateway Service
+  gateway:
+    build: .
+    container_name: ecommerce-gateway
     ports:
-      - "8080:8080"
+      - "${LOCAL_PORT:-8000}:${PORT:-8080}"
+    environment:
+      - PORT=${PORT:-8080}
+      - SHOP_SERVICE=${SHOP_SERVICE:-http://localhost:8001}
+      - SHOPCART_SERVICE=${SHOPCART_SERVICE:-http://localhost:8002}
     env_file:
       - .env
-    working_dir: /app
-    volumes:
-      - ./gateway:/app/gateway:rw
-      - ./uv.lock:/app/uv.lock:rw
-      - ./pyproject.toml:/app/pyproject.toml:rw
-      - ./.cache/uv:/home/appuser/.cache/uv  # fix permission denied errors
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8080}/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
