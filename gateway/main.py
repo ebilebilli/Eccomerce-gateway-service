@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
+from urllib.parse import urlencode
 from contextlib import asynccontextmanager
 import asyncio
 from gateway.utils import merge_openapi_docs, load_openapi, forward_request
@@ -31,10 +32,19 @@ async def on_startup():
                 operation_id = details.get('operationId', f'{method}_{path}')
 
                 async def handler(request: Request, _url=full_url, _method=method.upper()):
-                    body = await request.json() if _method in ('POST', 'PUT', 'PATCH') else None
-                    return await forward_request(_url, method=_method.lower(), data=body)
+                    body = None
+                    if _method in ('POST', 'PUT', 'PATCH'):
+                        try:
+                            body = await request.json()
+                        except Exception:
+                            body = None
 
-                clean_path = path.replace('/api/v1', '')
+                    url = _url.format(**request.path_params)
+                    if request.query_params:
+                        url = f"{url}?{urlencode(request.query_params)}"
+
+                    return await forward_request(url, method=_method.lower(), data=body)
+                
                 app.add_api_route(
                     path=path,
                     endpoint=handler,
