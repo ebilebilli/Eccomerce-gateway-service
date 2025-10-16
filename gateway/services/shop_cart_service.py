@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
-from gateway.utils.forward import forward_request
+from gateway.utils import forward_request, load_remote_openapi
 
 
 load_dotenv()
@@ -11,31 +11,25 @@ SHOPCART_SERVICE = os.getenv('SHOPCART_SERVICE')
 router = APIRouter(tags=['Shopcart Service'])
 
 
-@router.post('/shopcart/', tags=['Shopcart Service'])
-async def gateway_create_cart(data: dict):
-    return await forward_request(f'{SHOPCART_SERVICE}/shopcart/', method='post', data=data)
+async def register_shop_cart_routes():
+    openapi = await load_remote_openapi(SHOPCART_SERVICE)
+    paths = openapi.get('paths', {})
 
+    for path, methods in paths.items():
+        for method, details in methods.items():
+            operation_id = details.get('operationId', f'{method}_{path}')
+            full_url = f'{SHOPCART_SERVICE}{path}'
 
-@router.get('/shopcart/mycart', tags=['Shopcart Service'])
-async def gateway_get_mycart():
-    return await forward_request(f'{SHOPCART_SERVICE}/shopcart/mycart/')
+            async def handler(request: Request, _url=full_url, _method=method.upper()):
+                body = await request.json() if _method in ('POST', 'PUT', 'PATCH') else None
+                return await forward_request(_url, method=_method.lower(), data=body)
 
+            clean_path = path.replace('/api/v1', '')
 
-@router.get('/shopcart/{cart_id}', tags=['Shopcart Service'])
-async def gateway_get_cart(cart_id: str):
-    return await forward_request(f'{SHOPCART_SERVICE}/shopcart/{cart_id}/')
-
-
-@router.post('/shopcart/items', tags=['Shopcart Service'])
-async def gateway_add_item(data: dict):
-    return await forward_request(f'{SHOPCART_SERVICE}/shopcart/items/', method='post', data=data)
-
-
-@router.put('/shopcart/items/update/{item_id}', tags=['Shopcart Service'])
-async def gateway_update_item(item_id: str, data: dict):
-    return await forward_request(f'{SHOPCART_SERVICE}/shopcart/items/update/{item_id}/', method='put', data=data)
-
-
-@router.delete('/shopcart/items/delete/{item_id}', tags=['Shopcart Service'])
-async def gateway_delete_item(item_id: str):
-    return await forward_request(f'{SHOPCART_SERVICE}/shopcart/items/delete/{item_id}/', method='delete')
+            router.add_api_route(
+                path=clean_path,
+                endpoint=handler,
+                methods=[method.upper()],
+                name=operation_id,
+                tags=['Shop Service']
+            )
