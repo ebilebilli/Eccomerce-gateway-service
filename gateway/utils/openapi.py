@@ -1,20 +1,33 @@
 import httpx
-from fastapi import FastAPI
-import os
-from dotenv import load_dotenv
-from fastapi import APIRouter, Request
-
-from gateway.utils.forward import forward_request
+from fastapi.openapi.utils import get_openapi
 
 
-load_dotenv()
+async def load_openapi(service_url: str):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f'{service_url}/openapi.json')
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        print(f'HTTP error occurred: {e}')
+    except Exception as e:
+        print(f'An error occurred: {e}')
+    return {}
 
-SHOP_SERVICE = os.getenv('SHOP_SERVICE')
-app = FastAPI(title="Gateway API")
 
+async def merge_openapi_docs(app, services):
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
 
-async def load_remote_openapi(service_url: str):
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{SHOP_SERVICE}/openapi.json")
-        response.raise_for_status()
-        return response.json()
+    for service_url in services:
+        service_openapi = await load_openapi(service_url)  
+        if service_openapi:
+            openapi_schema['paths'].update(service_openapi.get('paths', {}))
+            if 'components' in service_openapi:
+                openapi_schema.setdefault('components', {}).update(service_openapi['components'])
+
+    return openapi_schema

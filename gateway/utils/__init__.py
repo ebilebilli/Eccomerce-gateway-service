@@ -1,2 +1,2 @@
 from .forward import forward_request
-from .openapi import load_remote_openapi
+from .openapi import load_openapi, merge_openapi_docs
