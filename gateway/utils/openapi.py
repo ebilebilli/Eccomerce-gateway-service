@@ -13,7 +13,7 @@ SHOP_SERVICE = os.getenv('SHOP_SERVICE')
 app = FastAPI(title="Gateway API")
 
 
-async def load_remote_openapi():
+async def load_remote_openapi(service_url: str):
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{SHOP_SERVICE}/openapi.json")
         response.raise_for_status()

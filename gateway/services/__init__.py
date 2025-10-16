@@ -1,2 +1,2 @@
-from .shop_service import *
-from .shop_cart_service import *
+from .shop_service import register_shop_routes
+from .shop_cart_service import register_shop_cart_routes
