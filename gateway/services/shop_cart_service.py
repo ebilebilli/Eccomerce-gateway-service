@@ -31,5 +31,5 @@ async def register_shop_cart_routes():
                 endpoint=handler,
                 methods=[method.upper()],
                 name=operation_id,
-                tags=['Shop Service']
+                tags=['Shopcart Service']
             )
