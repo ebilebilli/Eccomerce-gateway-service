@@ -13,11 +13,9 @@ load_dotenv()
 SHOPCART_SERVICE = os.getenv('SHOPCART_SERVICE')
 SHOP_SERVICE = os.getenv('SHOP_SERVICE')
 
-app = FastAPI(title='Gateway API', version='0.1')
 
-
-@app.on_event('startup')
-async def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     services = [SHOP_SERVICE, SHOPCART_SERVICE]
     app.openapi_schema = await merge_openapi_docs(app, services)
 
@@ -38,12 +36,12 @@ async def on_startup():
                             body = await request.json()
                         except Exception:
                             body = None
+
                     url = _url.format(**request.path_params)
                     if request.query_params:
                         url = f"{url}?{urlencode(request.query_params)}"
-
                     return await forward_request(url, method=_method.lower(), data=body)
-                
+
                 app.add_api_route(
                     path=path,
                     endpoint=handler,
@@ -51,7 +49,9 @@ async def on_startup():
                     name=operation_id,
                     tags=[service_url.split('//')[-1]],
                 )
+    yield
 
+app = FastAPI(title='Gateway API', version='0.1', lifespan=lifespan)
 
 @app.get('/openapi.json')
 async def openapi():
