@@ -4,7 +4,12 @@ from fastapi import FastAPI, Request
 from urllib.parse import urlencode
 from contextlib import asynccontextmanager
 import asyncio
-from gateway.utils import merge_openapi_docs, load_openapi, forward_request
+from gateway.utils import (
+    merge_openapi_docs, 
+    load_openapi, 
+    forward_request, 
+    should_protect
+)
 
 
 load_dotenv()
@@ -29,13 +34,16 @@ async def lifespan(app: FastAPI):
                 full_url = f'{service_url}{path}'
                 operation_id = details.get('operationId', f'{method}_{path}')
 
-                async def handler(request: Request, _url=full_url, _method=method.upper()):
+                async def handler(request: Request, _url=full_url, _method=method.upper(), _openapi=openapi_data ):
                     body = None
                     if _method in ('POST', 'PUT', 'PATCH'):
                         try:
                             body = await request.json()
                         except Exception:
                             body = None
+
+                    # if await should_protect(_openapi, path, _method.lower()):
+                    #     await verify_jwt(request)
 
                     url = _url.format(**request.path_params)
                     if request.query_params:

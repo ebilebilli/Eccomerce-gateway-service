@@ -47,3 +47,4 @@ async def verify_jwt(request: Request):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Token is invalid or expired.'
         )
+    

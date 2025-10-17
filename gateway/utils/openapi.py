@@ -31,3 +31,9 @@ async def merge_openapi_docs(app, services):
                 openapi_schema.setdefault('components', {}).update(service_openapi['components'])
 
     return openapi_schema
+
+
+async def should_protect(openapi_data: dict, path: str, method: str) -> bool:
+    path_info = openapi_data.get('paths', {}).get(path, {})
+    method_info = path_info.get(method.lower(), {})
+    return 'security' in method_info and method_info['security'] != []
