@@ -38,7 +38,6 @@ async def on_startup():
                             body = await request.json()
                         except Exception:
                             body = None
-
                     url = _url.format(**request.path_params)
                     if request.query_params:
                         url = f"{url}?{urlencode(request.query_params)}"
