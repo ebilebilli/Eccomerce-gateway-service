@@ -3,7 +3,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from urllib.parse import urlencode
 from contextlib import asynccontextmanager
-import asyncio
+
+from .auth import verify_jwt
 from gateway.utils import (
     merge_openapi_docs, 
     load_openapi, 
@@ -42,8 +43,8 @@ async def lifespan(app: FastAPI):
                         except Exception:
                             body = None
 
-                    # if await should_protect(_openapi, path, _method.lower()):
-                    #     await verify_jwt(request)
+                    if await should_protect(_openapi, path, _method.lower()):
+                        await verify_jwt(request)
 
                     url = _url.format(**request.path_params)
                     if request.query_params:
