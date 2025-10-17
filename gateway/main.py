@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
                     url = _url.format(**request.path_params)
                     if request.query_params:
                         url = f'{url}?{urlencode(request.query_params)}'
-                    return await forward_request(url, method=_method.lower(), data=body)
+                    return await forward_request(request, url, method=_method.lower(), data=body)
 
                 app.add_api_route(
                     path=path,
