@@ -43,18 +43,20 @@ async def proxy(service: str, full_path: str, request: Request):
     return await forward_request(service, full_path, request)
 
 
-async def fetch_openapi(service_name: str, url: str):
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            r = await client.get(f'{url}/openapi.json')
-            r.raise_for_status()
-            data = r.json()
-            new_paths = {f'/{service_name}{p}': v for p, v in data.get('paths', {}).items()}
-            data['paths'] = new_paths
-            return data
-    except Exception as e:
-        print(f'Could not load OpenAPI from {service_name}: {e}')
-        return None
+async def fetch_openapi(service_name: str, url: str, retries=3, delay=2):
+    for attempt in range(retries):
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                r = await client.get(f'{url}/openapi.json')
+                r.raise_for_status()
+                data = r.json()
+                new_paths = {f'/{service_name}{p}': v for p, v in data.get('paths', {}).items()}
+                data['paths'] = new_paths
+                return data
+        except Exception as e:
+            print(f'[{service_name}] attempt {attempt+1} failed: {e}')
+            await asyncio.sleep(delay)
+    return None
 
 
 async def merge_openapi_schemas():

@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from .services import SERVICE_URLS
 from .logging import logger  
 
+
 async def forward_request(service: str, path: str, request: Request):
     if service not in SERVICE_URLS:
         return JSONResponse({'error': 'Unknown service'}, status_code=400)
