@@ -1,13 +1,13 @@
 import httpx
 import asyncio
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .logging import logger
-from .auth import verify_jwt
+from .auth import verify_jwt, PUBLIC_PATHS
 from .forward import forward_request
 from .services import SERVICE_URLS
 
@@ -15,6 +15,7 @@ from .services import SERVICE_URLS
 load_dotenv()
 
 app = FastAPI(title='API Gateway', version='1.0.0')
+merged_openapi_schema = None
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,6 +24,7 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
 
 @app.middleware('http')
 async def log_requests(request: Request, call_next):
@@ -36,7 +38,20 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-merged_openapi_schema = None
+@app.middleware('http')
+async def auth_middleware(request: Request, call_next):
+    path = request.url.path
+    
+    if not any(path.startswith(p) for p in PUBLIC_PATHS):
+        try:
+            await verify_jwt(request)
+        except HTTPException as e:
+            return JSONResponse({"detail": e.detail}, status_code=e.status_code)
+
+    response = await call_next(request)
+    return response
+
+
 
 @app.api_route('/{service}/{full_path:path}', methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 async def proxy(service: str, full_path: str, request: Request):

@@ -7,6 +7,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+PUBLIC_PATHS = [
+    '/', 
+    '/openapi.json', 
+    '/docs', 
+    '/docs/', 
+    '/redoc', 
+    '/favicon.ico',
+    '/auth/login', 
+    '/auth/signup', 
+    '/public/'
+]
+
 JWT_SECRET = os.getenv('JWT_SECRET')
 JWT_ALGORITHM = os.getenv('JWT_ALGORITHM')
 HEADER = os.getenv('HEADER')
@@ -23,7 +36,7 @@ def create_access_token(payload: dict):
 
 def create_refresh_token(payload: dict):
     expire = datetime.now(tz=timezone.utc) + timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS)
-    payload.update({"exp": expire})
+    payload.update({'exp': expire})
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token
 
