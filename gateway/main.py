@@ -100,6 +100,12 @@ async def load_merged_openapi():
     print('Merged OpenAPI schema loaded.')
 
 
+async def periodic_refresh(interval: int = 30):
+    while True:
+        await merge_openapi_schemas()
+        await asyncio.sleep(interval)
+
+
 @app.get('/openapi.json', include_in_schema=False)
 async def custom_openapi():
     if merged_openapi_schema is None:
