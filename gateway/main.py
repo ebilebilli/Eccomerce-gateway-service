@@ -52,13 +52,12 @@ async def auth_middleware(request: Request, call_next):
     return response
 
 
-
 @app.api_route('/{service}/{full_path:path}', methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 async def proxy(service: str, full_path: str, request: Request):
     return await forward_request(service, full_path, request)
 
 
-async def fetch_openapi(service_name: str, url: str, retries=3, delay=2):
+async def fetch_openapi(service_name: str, url: str, retries=6, delay=2):
     for attempt in range(retries):
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
@@ -66,6 +65,11 @@ async def fetch_openapi(service_name: str, url: str, retries=3, delay=2):
                 r.raise_for_status()
                 data = r.json()
                 new_paths = {f'/{service_name}{p}': v for p, v in data.get('paths', {}).items()}
+
+                for path, methods in new_paths.items():
+                    for method_name, method_data in methods.items():
+                        method_data['tags'] = [service_name.capitalize()]
+
                 data['paths'] = new_paths
                 return data
         except Exception as e:
@@ -93,17 +97,18 @@ async def merge_openapi_schemas():
     return merged
 
 
-@app.on_event('startup')
-async def load_merged_openapi():
-    global merged_openapi_schema
-    merged_openapi_schema = await merge_openapi_schemas()
-    print('Merged OpenAPI schema loaded.')
-
-
 async def periodic_refresh(interval: int = 30):
     while True:
         await merge_openapi_schemas()
         await asyncio.sleep(interval)
+
+
+@app.on_event('startup')
+async def startup_event():
+    global merged_openapi_schema
+    merged_openapi_schema = await merge_openapi_schemas()
+    asyncio.create_task(periodic_refresh())
+    print('Merged OpenAPI schema loaded and periodic refresh started.')
 
 
 @app.get('/openapi.json', include_in_schema=False)
